@@ -1,0 +1,563 @@
+openapi: 3.0.1
+info:
+  description: >-
+    Documento que contiene la espefificación para la API de "Delilah Restó"
+  version: 1.0.0
+  title: Delilah Restó
+  license:
+    name: Apache 2.0
+    url: 'http://www.apache.org/licenses/LICENSE-2.0.html'
+host: localhost
+tags:
+  - name: products
+    description: Acceso a los productos disponibles
+  - name: orders
+    description: Acceso a los pedidos
+  - name: users
+    description: Operaciones correspondientes a los usuarios
+schemes:
+  - https
+  - http
+paths:
+  /products:
+    get:
+      tags:
+        - products
+      summary: Retorna lista de productos disponibles
+      parameters:
+        - in: header
+          name: Authorization
+          description: Token de autenticación obtenido al loguearse
+          required: true
+          schema:
+            $ref: '#/definitions/tokenAuth'
+      responses:
+        '200':
+          description: Operación exitosa
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/definitions/product_stored'
+        '403':
+          description: Error al validar usuario
+        '500':
+          description: Error inesperado
+    post:
+      tags:
+        - products
+      summary: Agrega un nuevo producto a la tienda
+      parameters:
+        - in: header
+          name: Authorization
+          description: Token de autenticación que contenga rol de admin
+          required: true
+          schema:
+            $ref: '#/definitions/tokenAuth'
+      requestBody:
+        required: true
+        content:
+          'application/json':
+            schema:
+              $ref: '#/definitions/product_upload'
+      responses:
+        '201':
+          description: Creado
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  id_plato:
+                    type: number
+                    example: 1
+                    
+        '400':
+          description: Error en creacion
+        '403':
+          description: No autenticado
+  /products/{productId}:
+    put:
+      tags:
+        - products
+      summary: Modifica un producto existente
+      parameters:
+        - name: productId
+          in: path
+          description: ID del producto a modificar
+          required: true
+          schema:
+            type: integer
+            example: 23
+        - in: header
+          name: Authorization
+          description: Token de autenticación con rol de admin
+          required: true
+          schema:
+            $ref: '#/definitions/tokenAuth'
+      requestBody:
+        required: true
+        content:
+          'aplication/json':
+            schema:
+              $ref: '#/definitions/modified_product'
+      responses:
+        '201':
+          description: OK
+          content:
+            text/plain:
+              schema:
+                type: string
+                example: 'Producto modificado satisfactoriamente!'
+        '403':
+          description: No autenticado
+          content:
+            text/plain:
+              schema:
+                type: string
+                example: 'No dispones de permisos de Administrador!'
+        '400':
+          description: Error de consulta
+    delete:
+      tags:
+        - products
+      summary: Elimina un producto
+      parameters:
+        - name: productId
+          in: path
+          description: ID del producto a eliminar
+          required: true
+          schema:
+            type: integer
+            example: 20
+        - in: header
+          name: authorization
+          description: Token de autenticación con rol de admin
+          required: true
+          schema:
+            $ref: '#/definitions/tokenAuth'
+      responses:
+        '200':
+          description: Producto eliminado
+          content:
+            text/plain:
+              example: "Producto con id 5, eliminado satisfactoriamente!"
+        '403':
+          description: No autenticado
+          content:
+            text/plain:
+              example: "No dispones de permisos de Administrador!"
+        '500':
+          description: Error de consulta
+          content:
+            text/plain:
+              example: "El producto no pudo ser eliminado"
+  /orders:
+    get:
+      tags:
+        - orders
+      summary: Retorna listado de todos los pedidos
+      parameters:
+        - in: header
+          name: Authorization
+          description: Token de autenticación con rol de admin
+          required: true
+          schema:
+            $ref: '#/definitions/tokenAuth'
+      responses:
+        '200':
+          description: Operacion exitosa
+          content:
+            appliction/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/definitions/order_complete'
+        '403':
+          description: No autenticado
+          content:
+            text/plain:
+              example: 'No dispones de permisos de Administrador'
+    post:
+      tags:
+        - orders
+      summary: Agrega un nuevo pedido
+      parameters:
+        - in: header
+          name: Authorization
+          description: Token de autenticación del usuario
+          required: true
+          schema:
+            $ref: '#/definitions/tokenAuth'
+      requestBody:
+        required: true
+        content:
+          aplication/json:
+            schema:
+              $ref: '#/definitions/order_sent'
+      responses:
+        '201':
+          description: Creado
+          content:
+            applcation/json:
+              schema:
+                $ref: '#/definitions/order_created'
+        '400':
+          description: Error en solicitud
+  /orders/{orderId}:
+    put:
+      tags:
+        - orders
+      summary: Modifica estado de pedido
+      parameters:
+        - in: path
+          name: orderId
+          description: Id del pedido a modificar
+          required: true
+          schema:
+            type: integer
+            example: 2
+        - in: header
+          name: Authorization
+          description: Token de autenticación con rol de admin
+          required: true
+          schema:
+            $ref: '#/definitions/tokenAuth'
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/definitions/order_statusToUpload'
+      responses:
+        '201':
+          description: Modificado
+          content:
+            text/plain:
+              example: "Pedido con id 2, modificado satisfactoriamente!"
+        '403':
+          description: No autenticado
+          content:
+            text/plain:
+              example: "No dispones de permisos de Administrador"
+        '400':
+          description: Error de solicitud
+    delete:
+      tags:
+        - orders
+      summary: Elimina un pedido
+      parameters:
+        - name: orderId
+          in: path
+          description: Id del pedido a eliminar
+          required: true
+          schema:
+            type: integer
+            example: 2
+        - in: header
+          name: Authorization
+          description: Token de autenticación con rol de admin
+          required: true
+          schema:
+            $ref: '#/definitions/tokenAuth'
+      responses:
+        '200':
+          description: Eliminado
+          content:
+            text/plain:
+              example: "Pedido con id 2, eliminado satisfactoriamente!"
+        '400':
+          description: Error de solicitud
+          content:
+            text/plain:
+              example: "No dispones de permisos de Administrador!"
+        '403':
+          description: No autenticado
+  /users/orders:
+    get:
+      tags:
+        - users
+      summary: Retorna el listado de pedidos del usuario
+      parameters:
+        - in: header
+          name: Authorization
+          description: Token de autenticación del usuario
+          required: true
+          schema:
+            $ref: '#/definitions/tokenAuth'
+      responses:
+        '200':
+          description: Completado
+          content: 
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/definitions/order_complete'
+        '404':
+          description: No encontrado
+          content:
+            text/plain:
+              example: 'No hay pedidos disponibles!'
+  /users/register:
+    post:
+      tags:
+        - users
+      summary: Crea un usuario
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/definitions/user_register'
+      responses:
+        '201':
+          description: Creado
+          content:
+            text/plain:
+              example: 'Usuario creado satisfactoriamente, id: 3'
+        '400':
+          description: Error en solicitud
+          content:
+            text/plain:
+              example: 'Ocurrió un error en la solicitud'
+  /users/login:
+    post:
+      tags:
+        - users
+      summary: Login de usuario
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                nombre_usuario:
+                  type: string
+                  example: "Robertox"
+                password:
+                  type: string
+                  example: "password1"
+      responses:
+        '200':
+          description: Logueado exitosamente
+          content:
+              text/plain:
+                schema:
+                  example: 'Bienvenido Robertox! Tu token de autenticación es: eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJzdWIiOiIxMjM0NTY3ODkwIiwibmFtZSI6IkpvaG4gRG9lIiwiaWF0IjoxNTE2MjM5MDIyfQ.SflKxwRJSMeKKF2QT4fwpMeJf36POk6yJV_adQssw5c'
+                
+        '400':
+          description: Bad request
+          content:
+            text/plain:
+              schema:
+                example: 'Usuario y/o contraseña incorrectos...'
+          
+definitions:
+  order_sent:
+    type: object
+    properties:
+      products:
+        type: array
+        items:
+          $ref: '#/definitions/selected_item'
+      metodo_pago:
+        type: string
+        description: Metodo de pago
+        enum:
+          - Efectivo
+          - Tarjeta
+  order_created:
+    type: object
+    properties:
+      id_pedido:
+        type: number
+      precio_total:
+        type: number
+      estado_pedido:
+        type: string
+        enum:
+          - Nuevo
+          - Confirmado
+          - Preparando
+          - Enviando
+          - Enviado
+      metodo_pago:
+        type: string
+        enum:
+          - Efectivo
+          - Tarjeta
+      direccion:
+        type: string
+        example: "Calle Falsa 123"
+      id_usuario_pedido:
+        type: number
+      fecha_pedido:
+        type: date
+        example: '2020-07-10 17:39:20'
+  order_complete:
+    type: object
+    properties:
+      id_pedido:
+        type: number
+      precio_total:
+        type: number
+      estado_pedido:
+        type: string
+        enum:
+          - Nuevo
+          - Confirmado
+          - Preparando
+          - Enviando
+          - Enviado
+      metodo_pago:
+        type: string
+        enum:
+          - Efectivo
+          - Tarjeta
+      direccion:
+        type: string
+        example: "Calle Falsa 123"
+      id_usuario_pedido:
+        type: number
+      fecha_pedido:
+        type: date
+        example: '2020-07-10 17:39:20'
+      platos:
+        type: array
+        items:
+          type: object
+          properties:
+            id_plato:
+              type: number
+            nombre_plato:
+              type: string
+              example: Big Mac
+            precio_plato:
+              type: number
+            PxO:
+              type: object
+              properties:
+                cantidad:
+                  type: number
+  order_uploaded:
+    type: object
+    properties:
+      order_id:
+        type: number
+      order_status:
+        type: string
+        enum:
+          - new
+          - confirmed
+          - preparing
+          - delivering
+          - delivered
+      order_time:
+        type: string
+        example: '17:39:20'
+      order_description:
+        type: string
+        example: 1xDoubleBurg 2xFrenchFr
+      order_amount:
+        type: number
+      payment_method:
+        type: string
+        description: payment method chosen by the user
+        enum:
+          - cash
+          - credit card
+      user_id:
+        type: number
+  selected_item:
+    type: object
+    properties:
+      id_plato:
+        type: number
+      cantidad:
+        type: number
+  user_register:
+    type: object
+    properties:
+      nombre_usuario:
+        type: string
+        example: "Pepito123"
+      nombre_apellido:
+        type: string
+        example: "Pedro Fuentes"
+      email:
+        type: string
+        example: "Pepito123@gmail.com"
+      direccion:
+        type: string
+        example: "Av.Pepin 2991"
+      telefono:
+        type: number
+        example: 1143543301
+      password:
+        type: string
+        example: "passwordSegura1"
+      es_admin:
+        type: number
+        minimum: 0
+        maximum: 1
+  user_id:
+    type: object
+    properties:
+      userId:
+        type: number
+  order_statusToUpload:
+    type: object
+    properties:
+      estado_pedido:
+        type: string
+        description: Estado del pedido
+        enum:
+          - Nuevo
+          - confirmado
+          - preparando
+          - enviando
+          - enviado
+  product_stored:
+    type: object
+    required:
+      - nombre_plato
+      - precio_plato
+    properties:
+      id_plato:
+        type: integer
+        example: 1
+      nombre_plato:
+        type: string
+        example: CangreBurger
+      precio_plato:
+        type: number
+        example: 450
+  product_upload:
+    type: object
+    required:
+      - nombre_plato
+      - precio_plato
+    properties:
+      nombre_plato:
+        type: string
+        example: Mc Pollo
+      precio_plato:
+        type: number
+  modified_product:
+    type: object
+    required:
+      - nombre_plato
+      - precio_plato
+    properties:
+      nombre_plato:
+        type: string
+        example: 'Modificado'
+      precio_plato:
+        type: number
+  
+  tokenAuth:
+    type: string
+    example: 'Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpZCI6MSwibm9tYnJlIjoiTmF0YWxpYSIsIm5vbWJyZVVzdWFyaW8iOiJuYXRhbGlhY2FtZXJvY0BnbWFpbC5jb20iLCJwYXNzd29yZCI6IktKVUJIWUFTJiYlVFVHWUdZSiIsInJvbCI6IkFkbWluaXN0cmFkb3IiLCJpYXQiOjE1OTA5NTkzMjF9.wum_e9qc4qUtbhvFHEVrnL8WE69sHcMb9dRuA8iGyDM'
